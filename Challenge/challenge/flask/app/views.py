@@ -68,7 +68,7 @@ def home():
     if cookie:
         user = decodeCookie(cookie)
         if user and checkUser(user):
-            return render_template('home.html') if user != "admin" else redirect("/admin")
+            return render_template('home.html') if user != "admin@ua.pt" else redirect("/admin")
         else:
             res = make_response(redirect("/login"))
             res.set_cookie('value', '', expires=0)
@@ -83,7 +83,7 @@ def admin():
     if cookie:
         user = decodeCookie(cookie)
         if user and checkUser(user):
-            return redirect("/") if user != "admin" else render_template('admin.html')
+            return redirect("/") if user != "admin@ua.pt" else render_template('admin.html')
         else:
             res = make_response(redirect("/login"))
             res.set_cookie('value', '', expires=0)
@@ -91,18 +91,33 @@ def admin():
     else:
         return redirect("/login")
 
-@app.route('/login', methods=['GET'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Check if user is already logged in
-    cookie = request.cookies.get('value')
-    if cookie:
-        user = decodeCookie(cookie)
-        if user and checkUser(user):
-            return redirect("/") if user != "admin" else redirect("/admin")
-        else:
-            res = make_response(redirect("/login"))
-            res.set_cookie('value', '', expires=0)
+    if request.method == 'GET':
+        # Check if user is already logged in
+        cookie = request.cookies.get('value')
+        if cookie:
+            user = decodeCookie(cookie)
+            if user and checkUser(user):
+                return redirect("/") if user != "admin@ua.pt" else redirect("/admin")
+            else:
+                res = make_response(redirect("/login"))
+                res.set_cookie('value', '', expires=0)
+                return res
+
+    # Check if "email", "password"  POST requests exist (user submitted form)
+    if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
+        # Create variables for easy access
+        email = request.form['email']
+        password = request.form['password']
+        print(f"HERE: {email}, {password}")
+        if checkSecret(email, password):
+            res = make_response(redirect("/"))
+            res.set_cookie("value", generateCookie(email))
+            
+            # Redirect to home page
             return res
+
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -113,7 +128,7 @@ def register():
         if cookie:
             user = decodeCookie(cookie)
             if user and checkUser(user):
-                return redirect("/") if user != "admin" else redirect("/admin")
+                return redirect("/") if user != "admin@ua.pt" else redirect("/admin")
             else:
                 res = make_response(redirect("/register"))
                 res.set_cookie('value', '', expires=0)
