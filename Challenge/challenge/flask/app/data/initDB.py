@@ -9,11 +9,11 @@ def initDB():
     cursor_obj = connection_obj.cursor()
     
     connection_obj.execute("""CREATE TABLE USERS(
-    username varchar(50) PRIMARY KEY,
+    email varchar(50) PRIMARY KEY,
     password varchar(50) COLLATE BINARY
     );""")
     
-    connection_obj.execute("""INSERT INTO USERS (username,password) VALUES ("admin","superduperhypersecretpassword")""")
+    connection_obj.execute("""INSERT INTO USERS (email,password) VALUES ("admin@ua.pt","superduperhypersecretpassword")""")
     
     connection_obj.commit()
     

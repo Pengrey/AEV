@@ -2,16 +2,16 @@ from flask import redirect, request, send_from_directory, render_template, make_
 from app import app
 import sqlite3
 from base64 import b64decode,b64encode
-import re
+import os
 
-def checkSecret(_username, _password):	
+def checkSecret(_email, _password):	
     # connection object
     connection_obj = sqlite3.connect('/challenge/app/data/creds.db')
   
     # cursor object
     cursor_obj = connection_obj.cursor()
     
-    cursor_obj.execute(f"SELECT * FROM USERS WHERE username = ? AND password = ?", (_username, _password))
+    cursor_obj.execute(f"SELECT * FROM USERS WHERE email = ? AND password = ?", (_email, _password))
     result = cursor_obj.fetchone()
 
     if result:
@@ -19,14 +19,24 @@ def checkSecret(_username, _password):
     else:
         return False
 
-def checkUser(_username):
+def registerAccount(_email, _password):	
+    # connection object
+    connection_obj = sqlite3.connect('/challenge/app/data/creds.db')
+    
+    connection_obj.execute("INSERT INTO USERS (email,password) VALUES (?, ?)", (_email, _password))
+    connection_obj.commit()
+    
+    # Close the connection
+    connection_obj.close()
+
+def checkUser(_email):
     # connection object
     connection_obj = sqlite3.connect('/challenge/app/data/creds.db')
   
     # cursor object
     cursor_obj = connection_obj.cursor()
     
-    cursor_obj.execute(f"SELECT * FROM USERS WHERE username = ?", (_username))
+    cursor_obj.execute(f"SELECT * FROM USERS WHERE email = ?", [_email])
     result = cursor_obj.fetchone()
 
     if result:
@@ -41,12 +51,13 @@ def strxor(a, b):
     else:
         return "".join([chr(ord(x) ^ ord(y)) for (x, y) in zip(a, b[:len(a)])])
 
-def generateCookie(username):
-    return b64encode(strxor(app.config['SECRET_KEY'], username).encode('ascii')).decode('ascii')
+def generateCookie(email):
+    return b64encode(strxor(os.environ['SECRET_KEY'], email).encode('ascii')).decode('ascii')
 
 def decodeCookie(cookie):
     try:
-        return strxor(app.config['SECRET_KEY'], b64decode(cookie).decode('ascii'))
+        user = strxor(os.environ['SECRET_KEY'], b64decode(cookie).decode('ascii'))
+        return user
     except:
         return ""
 
@@ -59,8 +70,24 @@ def home():
         if user and checkUser(user):
             return render_template('home.html') if user != "admin" else redirect("/admin")
         else:
+            res = make_response(redirect("/login"))
             res.set_cookie('value', '', expires=0)
-            return redirect("/login")
+            return res
+    else:
+        return redirect("/login")
+
+@app.route('/admin', methods=['GET'])
+def admin():
+    # Check if user is already logged in
+    cookie = request.cookies.get('value')
+    if cookie:
+        user = decodeCookie(cookie)
+        if user and checkUser(user):
+            return redirect("/") if user != "admin" else render_template('admin.html')
+        else:
+            res = make_response(redirect("/login"))
+            res.set_cookie('value', '', expires=0)
+            return res
     else:
         return redirect("/login")
 
@@ -75,29 +102,43 @@ def login():
         else:
             res = make_response(redirect("/login"))
             res.set_cookie('value', '', expires=0)
+            return res
     return render_template('login.html')
 
-@app.route('/register', methods=['GET'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    # Check if user is already logged in
-    cookie = request.cookies.get('value')
-    if cookie:
-        user = decodeCookie(cookie)
-        if user and checkUser(user):
-            return redirect("/") if user != "admin" else redirect("/admin")
-        else:
-            res = make_response(redirect("/register"))
-            res.set_cookie('value', '', expires=0)
+    if request.method == 'GET':
+        # Check if user is already logged in
+        cookie = request.cookies.get('value')
+        if cookie:
+            user = decodeCookie(cookie)
+            if user and checkUser(user):
+                return redirect("/") if user != "admin" else redirect("/admin")
+            else:
+                res = make_response(redirect("/register"))
+                res.set_cookie('value', '', expires=0)
+                return res
+
+    # Check if "email", "password"  POST requests exist (user submitted form)
+    if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
+        # Create variables for easy access
+        email = request.form['email']
+        password = request.form['password']
+
+        if not checkUser(email):
+            registerAccount(email, password)
+            res = make_response(redirect("/"))
+            res.set_cookie("value", generateCookie(email))
+            
+            # Redirect to home page
+            return res
+    
     return render_template('register.html')
 
 # robots.txt file
 @app.route('/robots.txt', methods=['GET'])
 def static_from_root():
     return send_from_directory(app.static_folder, request.path[1:])
-
-@app.route('/admin', methods=['GET'])
-def admin():
-    return render_template('admin.html')
 
 @app.errorhandler(404)
 def page_not_found(e):

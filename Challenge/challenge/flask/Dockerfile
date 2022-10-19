@@ -13,5 +13,8 @@ RUN pip3 install -r requirements.txt
 # Initiate DB
 RUN python3 ./app/data/initDB.py
 
+# Set secret key
+ENV SECRET_KEY=onetimepadshouldbeonetime
+
 # run the command to start uWSGI
 CMD ["uwsgi", "app.ini"]
