@@ -1,4 +1,4 @@
-from flask import redirect, request, send_from_directory, render_template, make_response
+from flask import redirect, request, send_from_directory, render_template, make_response,send_file
 from app import app
 import sqlite3
 from base64 import b64decode,b64encode
@@ -90,6 +90,31 @@ def admin():
             return res
     else:
         return redirect("/login")
+
+# This is where LFI will be executable
+# Supposedly, user could request a "malware stample"
+# That'd be stored here...but they can jump around a bit ;)
+@app.route('/admin', methods=['POST'])
+
+def malware_sample():
+    # Check if user is already logged in
+    cookie = request.cookies.get('value')
+    if cookie:
+        user = decodeCookie(cookie)
+        if user and checkUser(user):
+            if user == "admin@ua.pt":
+
+                # Get the file name
+                filename = request.args.get('file')
+                for el in request.args:
+                    print(el)
+
+                if filename:
+                    return send_file('/challenge/app/data', 'malware.exe', as_attachment=False)
+                else:
+                    return redirect("/admin")
+            else:
+                return redirect("/") 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
