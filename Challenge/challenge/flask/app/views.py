@@ -95,7 +95,6 @@ def admin():
 # Supposedly, user could request a "malware stample"
 # That'd be stored here...but they can jump around a bit ;)
 @app.route('/admin', methods=['POST'])
-
 def malware_sample():
     # Check if user is already logged in
     cookie = request.cookies.get('value')
@@ -105,12 +104,13 @@ def malware_sample():
             if user == "admin@ua.pt":
 
                 # Get the file name
-                filename = request.args.get('file')
-                for el in request.args:
-                    print(el)
-
+                filename=request.form.get("file")
+                filename = filename.replace("../","")
                 if filename:
-                    return send_file('/challenge/app/data', 'malware.exe', as_attachment=False)
+                    try:
+                        return send_file('/challenge/app/data/'+filename, as_attachment=False)
+                    except FileNotFoundError:
+                        return redirect("/admin")
                 else:
                     return redirect("/admin")
             else:
