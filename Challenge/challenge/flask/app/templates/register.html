@@ -12,15 +12,29 @@
     -webkit-font-smoothing: antialiased;
     }
 
+    html {
+      width:100%;
+      height: 100%;
+    }
+
     body {
     background: #a058e3;
+    background-size: cover;
+
     font-family: 'Rubik', sans-serif;
+    height: 100%;
+    width: 100%;
     }
 
     .login-form {
     background: #fff;
     width: 500px;
-    margin: 65px auto;
+    margin:  auto;
+    margin-top: 10%;
+    align-items: center;
+    justify-content: center;
+    margin: 65% left right bottom;
+    padding: 5% ;
     display: -webkit-box;
     display: flex;
     -webkit-box-orient: vertical;
@@ -113,6 +127,8 @@
       <button >Register</button>
     </div>
   </form>
+  <div style="margin-top: 10px;">Already have account? <a href="{{ url_for('login') }}">Sign in</a></div>
+
 </div>
 </body>
 </html>

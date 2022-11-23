@@ -184,7 +184,13 @@ def static_from_root():
 def page_not_found(e):
     return render_template('404.html'), 404
 
-
+@app.route('/logout', methods=['GET'])
+def logout():
+    # delete cookies
+    res = make_response(redirect("/login"))
+    res.set_cookie('value', '', expires=0)
+    return res
+    
     # write a sort 
 
 
