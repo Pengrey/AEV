@@ -34,7 +34,7 @@ sequenceDiagram
     Server->>User: Retrieve flag
 ```
 
-To solve the challenge automatically the player can use the found on the exploit folder as follows:
+To solve the challenge automatically the player can use the script found on the exploit folder as follows:
 ```bash
 python3 exploit.py
 ```
