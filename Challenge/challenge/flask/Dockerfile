@@ -7,6 +7,9 @@ WORKDIR /challenge
 # Copy the current directory contents into the container at /challenge
 ADD . /challenge
 
+# Move flag.txt to /root/flag.txt
+RUN mv flag.txt /root/flag.txt
+
 # Install the dependencies
 RUN pip3 install -r requirements.txt
 

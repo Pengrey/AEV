@@ -5,10 +5,8 @@ from base64 import b64decode,b64encode
 import os
 
 def checkSecret(_email, _password):	
-    # connection object
     connection_obj = sqlite3.connect('/challenge/app/data/creds.db')
   
-    # cursor object
     cursor_obj = connection_obj.cursor()
     
     cursor_obj.execute(f"SELECT * FROM USERS WHERE email = ? AND password = ?", (_email, _password))
@@ -19,21 +17,17 @@ def checkSecret(_email, _password):
     else:
         return False
 
-def registerAccount(_email, _password):	
-    # connection object
+def registerAccount(_email, _password):
     connection_obj = sqlite3.connect('/challenge/app/data/creds.db')
     
     connection_obj.execute("INSERT INTO USERS (email,password) VALUES (?, ?)", (_email, _password))
     connection_obj.commit()
     
-    # Close the connection
     connection_obj.close()
 
 def checkUser(_email):
-    # connection object
     connection_obj = sqlite3.connect('/challenge/app/data/creds.db')
   
-    # cursor object
     cursor_obj = connection_obj.cursor()
     
     cursor_obj.execute(f"SELECT * FROM USERS WHERE email = ?", [_email])
@@ -44,8 +38,7 @@ def checkUser(_email):
     else:
         return False
 
-def strxor(a, b):     
-    # xor two strings of different lengths
+def strxor(a, b):
     if len(a) > len(b):
         return "".join([chr(ord(x) ^ ord(y)) for (x, y) in zip(a[:len(b)], b)])
     else:
@@ -63,7 +56,6 @@ def decodeCookie(cookie):
 
 @app.route('/', methods=['GET'])
 def home():
-    # Check if user is already logged in
     cookie = request.cookies.get('value')
     if cookie:
         user = decodeCookie(cookie)
@@ -78,7 +70,6 @@ def home():
 
 @app.route('/admin', methods=['GET'])
 def admin():
-    # Check if user is already logged in
     cookie = request.cookies.get('value')
     if cookie:
         user = decodeCookie(cookie)
@@ -91,17 +82,13 @@ def admin():
     else:
         return redirect("/login")
 
-# Request file
 @app.route('/admin', methods=['POST'])
 def malware_sample():
-    # Check if user is already logged in
     cookie = request.cookies.get('value')
     if cookie:
         user = decodeCookie(cookie)
         if user and checkUser(user):
             if user == "admin@ua.pt":
-
-                # Get the file name
                 filename=request.form.get("file")
                 filename = filename.replace("../","")
                 if filename:
@@ -117,7 +104,6 @@ def malware_sample():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
-        # Check if user is already logged in
         cookie = request.cookies.get('value')
         if cookie:
             user = decodeCookie(cookie)
@@ -128,16 +114,13 @@ def login():
                 res.set_cookie('value', '', expires=0)
                 return res
 
-    # Check if "email", "password"  POST requests exist (user submitted form)
     if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
-        # Create variables for easy access
         email = request.form['email']
         password = request.form['password']
         if checkSecret(email, password):
             res = make_response(redirect("/"))
             res.set_cookie("value", generateCookie(email))
             
-            # Redirect to home page
             return res
 
     return render_template('login.html')
@@ -145,7 +128,6 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'GET':
-        # Check if user is already logged in
         cookie = request.cookies.get('value')
         if cookie:
             user = decodeCookie(cookie)
@@ -156,9 +138,7 @@ def register():
                 res.set_cookie('value', '', expires=0)
                 return res
 
-    # Check if "email", "password"  POST requests exist (user submitted form)
     if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
-        # Create variables for easy access
         email = request.form['email']
         password = request.form['password']
 
@@ -166,13 +146,11 @@ def register():
             registerAccount(email, password)
             res = make_response(redirect("/"))
             res.set_cookie("value", generateCookie(email))
-            
-            # Redirect to home page
+
             return res
     
     return render_template('register.html')
 
-# robots.txt file
 @app.route('/robots.txt', methods=['GET'])
 def static_from_root():
     return send_from_directory(app.static_folder, request.path[1:])
@@ -183,7 +161,6 @@ def page_not_found(e):
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    # delete cookies
     res = make_response(redirect("/login"))
     res.set_cookie('value', '', expires=0)
     return res
